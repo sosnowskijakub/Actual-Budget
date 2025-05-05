@@ -10,12 +10,13 @@ import { getMonthYearFormat } from 'loot-core/shared/months';
 import { getRecurringDescription } from 'loot-core/shared/schedules';
 import { integerToCurrency } from 'loot-core/shared/util';
 
-import { useAccounts } from '../../hooks/useAccounts';
-import { useCategories } from '../../hooks/useCategories';
-import { useDateFormat } from '../../hooks/useDateFormat';
-import { useLocale } from '../../hooks/useLocale';
-import { usePayees } from '../../hooks/usePayees';
 import { Link } from '../common/Link';
+
+import { useAccounts } from '@desktop-client/hooks/useAccounts';
+import { useCategories } from '@desktop-client/hooks/useCategories';
+import { useDateFormat } from '@desktop-client/hooks/useDateFormat';
+import { useLocale } from '@desktop-client/hooks/useLocale';
+import { usePayees } from '@desktop-client/hooks/usePayees';
 
 type ValueProps<T> = {
   value: T;
@@ -67,7 +68,7 @@ export function Value<T>({
 
   function formatValue(value) {
     if (value == null || value === '') {
-      return '(nothing)';
+      return t('(nothing)');
     } else if (typeof value === 'boolean') {
       return value ? 'true' : 'false';
     } else {
@@ -104,7 +105,7 @@ export function Value<T>({
             if (item) {
               return describe(item);
             } else {
-              return '(deleted)';
+              return t('(deleted)');
             }
           }
 

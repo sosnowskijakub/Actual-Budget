@@ -29,11 +29,11 @@ import {
   parseISO,
   isValid as isValidDate,
 } from 'date-fns';
-import { UAParser } from 'ua-parser-js';
 
 import { pushModal } from 'loot-core/client/modals/modalsSlice';
+import * as Platform from 'loot-core/client/platform';
 import { setLastTransaction } from 'loot-core/client/queries/queriesSlice';
-import { runQuery } from 'loot-core/client/query-helpers';
+import { aqlQuery } from 'loot-core/client/query-helpers';
 import { send } from 'loot-core/platform/client/fetch';
 import * as monthUtils from 'loot-core/shared/months';
 import { q } from 'loot-core/shared/query';
@@ -56,16 +56,6 @@ import {
   groupById,
 } from 'loot-core/shared/util';
 
-import { useAccounts } from '../../../hooks/useAccounts';
-import { useCategories } from '../../../hooks/useCategories';
-import { useDateFormat } from '../../../hooks/useDateFormat';
-import { useInitialMount } from '../../../hooks/useInitialMount';
-import { useNavigate } from '../../../hooks/useNavigate';
-import { usePayees } from '../../../hooks/usePayees';
-import {
-  SingleActiveEditFormProvider,
-  useSingleActiveEditForm,
-} from '../../../hooks/useSingleActiveEditForm';
 import { useSelector, useDispatch } from '../../../redux';
 import { MobilePageHeader, Page } from '../../Page';
 import { AmountInput } from '../../util/AmountInput';
@@ -75,8 +65,16 @@ import { getPrettyPayee } from '../utils';
 
 import { FocusableAmountInput } from './FocusableAmountInput';
 
-const agent = UAParser(navigator.userAgent);
-const isIOSAgent = agent.browser.name === 'Mobile Safari';
+import { useAccounts } from '@desktop-client/hooks/useAccounts';
+import { useCategories } from '@desktop-client/hooks/useCategories';
+import { useDateFormat } from '@desktop-client/hooks/useDateFormat';
+import { useInitialMount } from '@desktop-client/hooks/useInitialMount';
+import { useNavigate } from '@desktop-client/hooks/useNavigate';
+import { usePayees } from '@desktop-client/hooks/usePayees';
+import {
+  SingleActiveEditFormProvider,
+  useSingleActiveEditForm,
+} from '@desktop-client/hooks/useSingleActiveEditForm';
 
 function getFieldName(transactionId, field) {
   return `${field}-${transactionId}`;
@@ -176,11 +174,11 @@ function Footer({
   onEditField,
 }) {
   const [transaction, ...childTransactions] = transactions;
+  const emptySplitTransaction = childTransactions.find(t => t.amount === 0);
   const onClickRemainingSplit = () => {
     if (childTransactions.length === 0) {
       onSplit(transaction.id);
     } else {
-      const emptySplitTransaction = childTransactions.find(t => t.amount === 0);
       if (!emptySplitTransaction) {
         onAddSplit(transaction.id);
       } else {
@@ -216,11 +214,29 @@ function Footer({
               marginLeft: 6,
             }}
           >
-            Amount left:{' '}
-            {integerToCurrency(
-              transaction.amount > 0
-                ? transaction.error.difference
-                : -transaction.error.difference,
+            {!emptySplitTransaction ? (
+              <Trans>
+                Add new split -{' '}
+                {{
+                  amount: integerToCurrency(
+                    transaction.amount > 0
+                      ? transaction.error.difference
+                      : -transaction.error.difference,
+                  ),
+                }}{' '}
+                left
+              </Trans>
+            ) : (
+              <Trans>
+                Amount left:{' '}
+                {{
+                  amount: integerToCurrency(
+                    transaction.amount > 0
+                      ? transaction.error.difference
+                      : -transaction.error.difference,
+                  ),
+                }}
+              </Trans>
             )}
           </Text>
         </Button>
@@ -272,7 +288,7 @@ function Footer({
               marginLeft: 6,
             }}
           >
-            Save changes
+            <Trans>Save changes</Trans>
           </Text>
         </Button>
       )}
@@ -473,7 +489,7 @@ const TransactionEditInner = memo(function TransactionEditInner({
   const [totalAmountFocused, setTotalAmountFocused] = useState(
     // iOS does not support automatically opening up the keyboard for the
     // total amount field. Hence we should not focus on it on page render.
-    !isIOSAgent,
+    !Platform.isIOSAgent,
   );
   const childTransactionElementRefMap = useRef({});
   const hasAccountChanged = useRef(false);
@@ -491,7 +507,7 @@ const TransactionEditInner = memo(function TransactionEditInner({
   const isInitialMount = useInitialMount();
 
   useEffect(() => {
-    if (isInitialMount && isAdding && !isIOSAgent) {
+    if (isInitialMount && isAdding && !Platform.isIOSAgent) {
       onTotalAmountEdit();
     }
   }, [isAdding, isInitialMount, onTotalAmountEdit]);
@@ -1092,7 +1108,7 @@ function TransactionEditUnconnected({
       // The edit item components expect to work with a flat array of
       // transactions when handling splits, so we call ungroupTransactions to
       // flatten parent and children into one array.
-      const { data } = await runQuery(
+      const { data } = await aqlQuery(
         q('transactions')
           .filter({ id: transactionId })
           .select('*')

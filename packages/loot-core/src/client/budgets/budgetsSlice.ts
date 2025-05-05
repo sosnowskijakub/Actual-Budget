@@ -7,11 +7,11 @@ import { getDownloadError, getSyncError } from '../../shared/errors';
 import { type Budget } from '../../types/budget';
 import { type File } from '../../types/file';
 import { type Handlers } from '../../types/handlers';
-import { loadGlobalPrefs, loadPrefs } from '../actions';
-import { setAppState } from '../app/appSlice';
-import * as constants from '../constants';
+import { resetApp, setAppState } from '../app/appSlice';
 import { closeModal, pushModal } from '../modals/modalsSlice';
+import { loadGlobalPrefs, loadPrefs } from '../prefs/prefsSlice';
 import { createAppAsyncThunk } from '../redux';
+import { signOut } from '../users/usersSlice';
 
 const sliceName = 'budgets';
 
@@ -101,10 +101,7 @@ export const closeBudget = createAppAsyncThunk(
   async (_, { dispatch, getState }) => {
     const prefs = getState().prefs.local;
     if (prefs && prefs.id) {
-      // This clears out all the app state so the user starts fresh
-      // TODO: Change to use an action once CLOSE_BUDGET is migrated to redux toolkit.
-      await dispatch({ type: constants.CLOSE_BUDGET });
-
+      await dispatch(resetApp());
       await dispatch(setAppState({ loadingText: t('Closing...') }));
       await send('close-budget');
       await dispatch(setAppState({ loadingText: null }));
@@ -120,8 +117,7 @@ export const closeBudgetUI = createAppAsyncThunk(
   async (_, { dispatch, getState }) => {
     const prefs = getState().prefs.local;
     if (prefs && prefs.id) {
-      // TODO: Change to use an action once CLOSE_BUDGET is migrated to redux toolkit.
-      await dispatch({ type: constants.CLOSE_BUDGET });
+      await dispatch(resetApp());
     }
   },
 );
@@ -193,7 +189,6 @@ export const duplicateBudget = createAppAsyncThunk(
   async (
     {
       id,
-      cloudId,
       oldName,
       newName,
       managePage,
@@ -202,6 +197,10 @@ export const duplicateBudget = createAppAsyncThunk(
     }: DuplicateBudgetPayload,
     { dispatch },
   ) => {
+    if (!id) {
+      throw new Error('Unable to duplicate a budget that is not local.');
+    }
+
     try {
       await dispatch(
         setAppState({
@@ -214,7 +213,6 @@ export const duplicateBudget = createAppAsyncThunk(
 
       await send('duplicate-budget', {
         id,
-        cloudId,
         newName,
         cloudSync,
         open: loadBudget,
@@ -313,14 +311,18 @@ export const downloadBudget = createAppAsyncThunk(
     );
 
     const { id, error } = await send('download-budget', {
-      fileId: cloudFileId,
-      replace,
+      cloudFileId,
     });
 
     if (error) {
       if (error.reason === 'decrypt-failure') {
         const opts = {
-          hasExistingKey: error.meta && error.meta.isMissingKey,
+          hasExistingKey: Boolean(
+            error.meta &&
+              typeof error.meta === 'object' &&
+              'isMissingKey' in error.meta &&
+              error.meta.isMissingKey,
+          ),
           cloudFileId,
           onSuccess: () => {
             dispatch(downloadBudget({ cloudFileId, replace }));
@@ -338,8 +340,16 @@ export const downloadBudget = createAppAsyncThunk(
               'This file will be replaced. This probably happened because files were manually ' +
               'moved around outside of Actual.',
             {
-              id: error.meta.id,
-              name: error.meta.name,
+              id:
+                error.meta &&
+                typeof error.meta === 'object' &&
+                'id' in error.meta &&
+                error.meta.id,
+              name:
+                error.meta &&
+                typeof error.meta === 'object' &&
+                'name' in error.meta &&
+                error.meta.name,
             },
           ),
         );
@@ -353,15 +363,17 @@ export const downloadBudget = createAppAsyncThunk(
       }
       return null;
     } else {
+      if (!id) {
+        throw new Error('No id returned from download.');
+      }
       await Promise.all([
         dispatch(loadGlobalPrefs()),
         dispatch(loadAllFiles()),
         dispatch(loadBudget({ id })),
       ]);
       await dispatch(setAppState({ loadingText: null }));
+      return id;
     }
-
-    return id;
   },
 );
 
@@ -445,9 +457,12 @@ const budgetsSlice = createSlice({
         action.payload.remoteFiles,
       );
     },
-    signOut(state) {
+  },
+  extraReducers: builder => {
+    builder.addCase(signOut.fulfilled, state => {
       state.allFiles = null;
-    },
+    });
+    builder.addCase(resetApp, state => state || initialState);
   },
 });
 
@@ -473,7 +488,7 @@ export const actions = {
   makeBackup,
 };
 
-export const { setBudgets, setRemoteFiles, setAllFiles, signOut } = actions;
+export const { setBudgets, setRemoteFiles, setAllFiles } = actions;
 
 function sortFiles(arr: File[]) {
   arr.sort((x, y) => {

@@ -12,7 +12,7 @@ import {
 } from '../../types/models';
 import { type EverythingButIdOptional } from '../../types/util';
 import { createApp } from '../app';
-import { runQuery as aqlQuery } from '../aql';
+import { aqlQuery } from '../aql';
 import * as db from '../db';
 import { ValidationError } from '../errors';
 import { requiredFields } from '../models';
@@ -20,8 +20,6 @@ import { mutator } from '../mutators';
 import { reportModel } from '../reports/app';
 import { batchMessages } from '../sync';
 import { undoable } from '../undo';
-
-import { DashboardHandlers } from './types/handlers';
 
 function isExportedCustomReportWidget(
   widget: ExportImportDashboardWidget,
@@ -244,6 +242,15 @@ async function importDashboard({ filepath }: { filepath: string }) {
     return { error: 'internal-error' as const };
   }
 }
+
+export type DashboardHandlers = {
+  'dashboard-update': typeof updateDashboard;
+  'dashboard-update-widget': typeof updateDashboardWidget;
+  'dashboard-reset': typeof resetDashboard;
+  'dashboard-add-widget': typeof addDashboardWidget;
+  'dashboard-remove-widget': typeof removeDashboardWidget;
+  'dashboard-import': typeof importDashboard;
+};
 
 export const app = createApp<DashboardHandlers>();
 

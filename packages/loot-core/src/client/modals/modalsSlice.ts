@@ -17,9 +17,9 @@ import {
   type NewUserEntity,
   type NoteEntity,
 } from '../../types/models';
-import { setAppState } from '../app/appSlice';
-import { signOut } from '../budgets/budgetsSlice';
+import { resetApp, setAppState } from '../app/appSlice';
 import { createAppAsyncThunk } from '../redux';
+import { signOut } from '../users/usersSlice';
 
 const sliceName = 'modals';
 
@@ -117,7 +117,9 @@ export type Modal =
         onMoveExternal: (arg: {
           institutionId: string;
         }) => Promise<
-          { error: 'unknown' | 'timeout' } | { data: GoCardlessToken }
+          | { error: 'timeout' }
+          | { error: 'unknown'; message?: string }
+          | { data: GoCardlessToken }
         >;
         onClose?: (() => void) | undefined;
         onSuccess: (data: GoCardlessToken) => Promise<void>;
@@ -212,10 +214,13 @@ export type Modal =
   | {
       name: 'category-autocomplete';
       options: {
+        title?: string;
         categoryGroups?: CategoryGroupEntity[];
         onSelect: (categoryId: string, categoryName: string) => void;
         month?: string | undefined;
         showHiddenCategories?: boolean;
+        closeOnSelect?: boolean;
+        clearOnSelect?: boolean;
         onClose?: () => void;
       };
     }
@@ -453,7 +458,7 @@ export type Modal =
       };
     }
   | {
-      name: 'budget-list';
+      name: 'budget-file-selection';
     }
   | {
       name: 'confirm-transaction-edit';
@@ -506,6 +511,7 @@ export type Modal =
       name: 'confirm-unlink-account';
       options: {
         accountName: string;
+        isViewBankSyncSettings: boolean;
         onUnlink: () => void;
       };
     }
@@ -626,11 +632,11 @@ const modalsSlice = createSlice({
     },
   },
   extraReducers: builder => {
-    builder
-      .addCase(setAppState, (state, action) => {
-        state.isHidden = action.payload.loadingText !== null;
-      })
-      .addCase(signOut, () => initialState);
+    builder.addCase(setAppState, (state, action) => {
+      state.isHidden = action.payload.loadingText !== null;
+    });
+    builder.addCase(signOut.fulfilled, () => initialState);
+    builder.addCase(resetApp, () => initialState);
   },
 });
 

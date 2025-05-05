@@ -12,6 +12,7 @@ import {
   type AccountEntity,
   type PayeeEntity,
 } from '../../types/models';
+import { resetApp } from '../app/appSlice';
 import {
   addGenericErrorNotification,
   addNotification,
@@ -154,6 +155,10 @@ const queriesSlice = createSlice({
       state.payees = action.payload;
       state.payeesLoaded = true;
     });
+
+    // App
+
+    builder.addCase(resetApp, () => initialState);
   },
 });
 
@@ -353,7 +358,7 @@ export const moveCategory = createAppAsyncThunk(
 
 type MoveCategoryGroupPayload = {
   id: CategoryGroupEntity['id'];
-  targetId: CategoryGroupEntity['id'];
+  targetId: CategoryGroupEntity['id'] | null;
 };
 
 export const moveCategoryGroup = createAppAsyncThunk(

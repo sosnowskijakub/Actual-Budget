@@ -5,7 +5,6 @@ import globals from 'globals';
 
 import pluginImport from 'eslint-plugin-import';
 import pluginJSXA11y from 'eslint-plugin-jsx-a11y';
-import pluginPrettier from 'eslint-plugin-prettier/recommended';
 import pluginReact from 'eslint-plugin-react';
 import pluginReactHooks from 'eslint-plugin-react-hooks';
 import pluginRulesDir from 'eslint-plugin-rulesdir';
@@ -90,6 +89,7 @@ export default [
   {
     ignores: [
       'packages/api/app/bundle.api.js',
+      'packages/api/app/stats.json',
       'packages/api/dist',
       'packages/api/@types',
       'packages/api/migrations',
@@ -118,6 +118,26 @@ export default [
     ],
   },
   {
+    // Temporary until the sync-server is migrated to TypeScript
+    files: [
+      'packages/sync-server/**/*.spec.js?(x)',
+      'packages/sync-server/**/*.test.js?(x)',
+    ],
+    languageOptions: {
+      globals: {
+        vi: true,
+        describe: true,
+        expect: true,
+        it: true,
+        beforeAll: true,
+        beforeEach: true,
+        afterAll: true,
+        afterEach: true,
+        test: true,
+      },
+    },
+  },
+  {
     linterOptions: {
       reportUnusedDisableDirectives: true,
     },
@@ -125,7 +145,6 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.commonjs,
-        ...globals.jest,
         ...globals.node,
         globalThis: false,
         vi: true,
@@ -145,7 +164,6 @@ export default [
   },
   pluginReact.configs.flat.recommended,
   pluginReact.configs.flat['jsx-runtime'],
-  pluginPrettier,
   ...pluginTypescript.configs.recommended,
   pluginImport.flatConfigs.recommended,
   {
@@ -529,7 +547,7 @@ export default [
       sourceType: 'module',
 
       parserOptions: {
-        project: [path.join(__dirname, './tsconfig.json')],
+        projectService: true,
         ecmaFeatures: {
           jsx: true,
         },
@@ -548,6 +566,13 @@ export default [
       'no-dupe-class-members': 'off',
       // 'tsc' already handles this (https://github.com/typescript-eslint/typescript-eslint/issues/477)
       'no-undef': 'off',
+
+      // TypeScript already handles these (https://typescript-eslint.io/troubleshooting/typed-linting/performance/#eslint-plugin-import)
+      'import/named': 'off',
+      'import/namespace': 'off',
+      'import/default': 'off',
+      'import/no-named-as-default-member': 'off',
+      'import/no-unresolved': 'off',
 
       // Add TypeScript specific rules (and turn off ESLint equivalents)
       '@typescript-eslint/consistent-type-assertions': 'warn',
@@ -746,6 +771,16 @@ export default [
       'import/no-unresolved': 'off',
     },
   },
+
+  // Allow configuring vitest with default exports (recommended as per vitest docs)
+  {
+    files: ['**/vitest.config.ts', '**/vitest.web.config.ts'],
+    rules: {
+      'import/no-anonymous-default-export': 'off',
+      'import/no-default-export': 'off',
+    },
+  },
+
   {},
   {
     // TODO: fix the issues in these files

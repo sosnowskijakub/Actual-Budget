@@ -22,20 +22,16 @@ import { getValidMonthBounds } from './MonthsContext';
 export function addToBeBudgetedGroup(groups: CategoryGroupEntity[]) {
   return [
     {
-      id: 'to-be-budgeted',
-      name: t('To Be Budgeted'),
+      id: 'to-budget',
+      name: t('To Budget'),
       categories: [
         {
-          id: 'to-be-budgeted',
-          name: t('To Be Budgeted'),
-          cat_group: 'to-be-budgeted',
-          group: {
-            id: 'to-be-budgeted',
-            name: t('To Be Budgeted'),
-          },
+          id: 'to-budget',
+          name: t('To  Budget'),
+          group: 'to-budget',
         },
       ],
-    },
+    } as CategoryGroupEntity,
     ...groups,
   ];
 }
@@ -72,8 +68,8 @@ export function makeAmountGrey(value: number | string): CSSProperties {
 
 export function makeBalanceAmountStyle(
   value: number,
-  goalValue?: number,
-  budgetedValue?: number,
+  goalValue?: number | null,
+  budgetedValue?: number | null,
 ) {
   if (value < 0) {
     return { color: theme.errorText };

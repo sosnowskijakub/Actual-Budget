@@ -6,6 +6,7 @@ import express from 'express';
 import actuator from 'express-actuator';
 import rateLimit from 'express-rate-limit';
 
+import { bootstrap } from './account-db.js';
 import * as accountApp from './app-account.js';
 import * as adminApp from './app-admin.js';
 import * as goCardlessApp from './app-gocardless/app-gocardless.js';
@@ -107,6 +108,24 @@ function parseHTTPSConfig(value) {
 }
 
 export async function run() {
+  const openIdConfig = config?.getProperties()?.openId;
+  if (
+    openIdConfig?.discoveryURL ||
+    openIdConfig?.issuer?.authorization_endpoint
+  ) {
+    console.log('OpenID configuration found. Preparing server to use it');
+    try {
+      const { error } = await bootstrap({ openId: openIdConfig }, true);
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('OpenID configured!');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   if (config.get('https.key') && config.get('https.cert')) {
     const https = await import('node:https');
     const httpsOptions = {
@@ -120,6 +139,9 @@ export async function run() {
   } else {
     app.listen(config.get('port'), config.get('hostname'));
   }
+
+  // Signify to any parent process that the server has started. Used in electron desktop app
+  process.parentPort?.postMessage({ type: 'server-started' });
 
   console.log(
     'Listening on ' + config.get('hostname') + ':' + config.get('port') + '...',

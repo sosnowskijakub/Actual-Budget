@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DialogTrigger } from 'react-aria-components';
+import { Dialog, DialogTrigger } from 'react-aria-components';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Button, ButtonWithLoading } from '@actual-app/components/button';
@@ -22,16 +22,17 @@ import { send } from 'loot-core/platform/client/fetch';
 import { useAuth } from '../../auth/AuthProvider';
 import { Permissions } from '../../auth/types';
 import { authorizeBank } from '../../gocardless';
-import { useFeatureFlag } from '../../hooks/useFeatureFlag';
-import { useGoCardlessStatus } from '../../hooks/useGoCardlessStatus';
-import { usePluggyAiStatus } from '../../hooks/usePluggyAiStatus';
-import { useSimpleFinStatus } from '../../hooks/useSimpleFinStatus';
-import { useSyncServerStatus } from '../../hooks/useSyncServerStatus';
 import { useDispatch } from '../../redux';
 import { Warning } from '../alerts';
 import { Link } from '../common/Link';
 import { Modal, ModalCloseButton, ModalHeader } from '../common/Modal';
 import { useMultiuserEnabled } from '../ServerContext';
+
+import { useFeatureFlag } from '@desktop-client/hooks/useFeatureFlag';
+import { useGoCardlessStatus } from '@desktop-client/hooks/useGoCardlessStatus';
+import { usePluggyAiStatus } from '@desktop-client/hooks/usePluggyAiStatus';
+import { useSimpleFinStatus } from '@desktop-client/hooks/useSimpleFinStatus';
+import { useSyncServerStatus } from '@desktop-client/hooks/useSyncServerStatus';
 
 type CreateAccountModalProps = Extract<
   ModalType,
@@ -416,19 +417,21 @@ export function CreateAccountModal({
                             </Button>
 
                             <Popover>
-                              <Menu
-                                onMenuSelect={item => {
-                                  if (item === 'reconfigure') {
-                                    onGoCardlessReset();
-                                  }
-                                }}
-                                items={[
-                                  {
-                                    name: 'reconfigure',
-                                    text: t('Reset GoCardless credentials'),
-                                  },
-                                ]}
-                              />
+                              <Dialog>
+                                <Menu
+                                  onMenuSelect={item => {
+                                    if (item === 'reconfigure') {
+                                      onGoCardlessReset();
+                                    }
+                                  }}
+                                  items={[
+                                    {
+                                      name: 'reconfigure',
+                                      text: t('Reset GoCardless credentials'),
+                                    },
+                                  ]}
+                                />
+                              </Dialog>
                             </Popover>
                           </DialogTrigger>
                         )}
@@ -479,19 +482,21 @@ export function CreateAccountModal({
                               />
                             </Button>
                             <Popover>
-                              <Menu
-                                onMenuSelect={item => {
-                                  if (item === 'reconfigure') {
-                                    onSimpleFinReset();
-                                  }
-                                }}
-                                items={[
-                                  {
-                                    name: 'reconfigure',
-                                    text: t('Reset SimpleFIN credentials'),
-                                  },
-                                ]}
-                              />
+                              <Dialog>
+                                <Menu
+                                  onMenuSelect={item => {
+                                    if (item === 'reconfigure') {
+                                      onSimpleFinReset();
+                                    }
+                                  }}
+                                  items={[
+                                    {
+                                      name: 'reconfigure',
+                                      text: t('Reset SimpleFIN credentials'),
+                                    },
+                                  ]}
+                                />
+                              </Dialog>
                             </Popover>
                           </DialogTrigger>
                         )}
@@ -543,19 +548,23 @@ export function CreateAccountModal({
                                 </Button>
 
                                 <Popover>
-                                  <Menu
-                                    onMenuSelect={item => {
-                                      if (item === 'reconfigure') {
-                                        onPluggyAiReset();
-                                      }
-                                    }}
-                                    items={[
-                                      {
-                                        name: 'reconfigure',
-                                        text: t('Reset Pluggy.ai credentials'),
-                                      },
-                                    ]}
-                                  />
+                                  <Dialog>
+                                    <Menu
+                                      onMenuSelect={item => {
+                                        if (item === 'reconfigure') {
+                                          onPluggyAiReset();
+                                        }
+                                      }}
+                                      items={[
+                                        {
+                                          name: 'reconfigure',
+                                          text: t(
+                                            'Reset Pluggy.ai credentials',
+                                          ),
+                                        },
+                                      ]}
+                                    />
+                                  </Dialog>
                                 </Popover>
                               </DialogTrigger>
                             )}

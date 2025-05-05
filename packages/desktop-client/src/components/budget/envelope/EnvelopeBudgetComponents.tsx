@@ -24,8 +24,6 @@ import {
   type CategoryEntity,
 } from 'loot-core/types/models';
 
-import { useContextMenu } from '../../../hooks/useContextMenu';
-import { useUndo } from '../../../hooks/useUndo';
 import { type Binding, type SheetFields } from '../../spreadsheet';
 import { CellValue, CellValueText } from '../../spreadsheet/CellValue';
 import { useSheetName } from '../../spreadsheet/useSheetName';
@@ -36,6 +34,9 @@ import { makeAmountGrey } from '../util';
 
 import { BalanceMovementMenu } from './BalanceMovementMenu';
 import { BudgetMenu } from './BudgetMenu';
+
+import { useContextMenu } from '@desktop-client/hooks/useContextMenu';
+import { useUndo } from '@desktop-client/hooks/useUndo';
 
 export function useEnvelopeSheetName<
   FieldName extends SheetFields<'envelope-budget'>,
@@ -443,7 +444,7 @@ export const ExpenseCategoryMonth = memo(function ExpenseCategoryMonth({
           placement="bottom end"
           isOpen={balanceMenuOpen}
           onOpenChange={() => setBalanceMenuOpen(false)}
-          style={{ width: 200, margin: 1 }}
+          style={{ margin: 1 }}
           isNonModal
           {...balancePosition}
         >
@@ -523,6 +524,7 @@ export function IncomeCategoryMonth({
                 className={css({
                   cursor: 'pointer',
                   ':hover': { textDecoration: 'underline' },
+                  ...makeAmountGrey(props.value),
                 })}
               />
             )}

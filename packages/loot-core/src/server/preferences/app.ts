@@ -43,6 +43,10 @@ async function saveSyncedPrefs({
   id: keyof SyncedPrefs;
   value: string | undefined;
 }) {
+  if (!id) {
+    return;
+  }
+
   await db.update('preferences', { id, value });
 }
 
@@ -58,50 +62,64 @@ async function getSyncedPrefs(): Promise<SyncedPrefs> {
 }
 
 async function saveGlobalPrefs(prefs: GlobalPrefs) {
-  if ('maxMonths' in prefs) {
+  if (!prefs) {
+    return 'ok';
+  }
+
+  if (prefs.maxMonths !== undefined) {
     await asyncStorage.setItem('max-months', '' + prefs.maxMonths);
   }
-  if ('documentDir' in prefs) {
-    if (prefs.documentDir && (await fs.exists(prefs.documentDir))) {
-      await asyncStorage.setItem('document-dir', prefs.documentDir);
-    }
+  if (prefs.categoryExpandedState) {
+    await asyncStorage.setItem(
+      'category-expanded-state',
+      '' + prefs.categoryExpandedState,
+    );
   }
-  if ('floatingSidebar' in prefs) {
+  if (prefs.documentDir !== undefined && (await fs.exists(prefs.documentDir))) {
+    await asyncStorage.setItem('document-dir', prefs.documentDir);
+  }
+  if (prefs.floatingSidebar !== undefined) {
     await asyncStorage.setItem('floating-sidebar', '' + prefs.floatingSidebar);
   }
-  if ('language' in prefs) {
+  if (prefs.language !== undefined) {
     await asyncStorage.setItem('language', prefs.language);
   }
-  if ('theme' in prefs) {
+  if (prefs.theme !== undefined) {
     await asyncStorage.setItem('theme', prefs.theme);
   }
-  if ('preferredDarkTheme' in prefs) {
+  if (prefs.preferredDarkTheme !== undefined) {
     await asyncStorage.setItem(
       'preferred-dark-theme',
       prefs.preferredDarkTheme,
     );
   }
-  if ('serverSelfSignedCert' in prefs) {
+  if (prefs.serverSelfSignedCert !== undefined) {
     await asyncStorage.setItem(
       'server-self-signed-cert',
       prefs.serverSelfSignedCert,
     );
   }
+  if (prefs.syncServerConfig !== undefined) {
+    await asyncStorage.setItem('syncServerConfig', prefs.syncServerConfig);
+  }
   return 'ok';
 }
 
-async function loadGlobalPrefs() {
-  const [
-    [, floatingSidebar],
-    [, maxMonths],
-    [, documentDir],
-    [, encryptKey],
-    [, language],
-    [, theme],
-    [, preferredDarkTheme],
-    [, serverSelfSignedCert],
-  ] = await asyncStorage.multiGet([
+async function loadGlobalPrefs(): Promise<GlobalPrefs> {
+  const {
+    'floating-sidebar': floatingSidebar,
+    'category-expanded-state': categoryExpandedState,
+    'max-months': maxMonths,
+    'document-dir': documentDir,
+    'encrypt-key': encryptKey,
+    language,
+    theme,
+    'preferred-dark-theme': preferredDarkTheme,
+    'server-self-signed-cert': serverSelfSignedCert,
+    syncServerConfig,
+  } = await asyncStorage.multiGet([
     'floating-sidebar',
+    'category-expanded-state',
     'max-months',
     'document-dir',
     'encrypt-key',
@@ -109,10 +127,12 @@ async function loadGlobalPrefs() {
     'theme',
     'preferred-dark-theme',
     'server-self-signed-cert',
+    'syncServerConfig',
   ] as const);
   return {
     floatingSidebar: floatingSidebar === 'true',
-    maxMonths: stringToInteger(maxMonths || ''),
+    categoryExpandedState: stringToInteger(categoryExpandedState || '') || 0,
+    maxMonths: stringToInteger(maxMonths || '') || 1,
     documentDir: documentDir || getDefaultDocumentDir(),
     keyId: encryptKey && JSON.parse(encryptKey).id,
     language,
@@ -129,10 +149,15 @@ async function loadGlobalPrefs() {
         ? preferredDarkTheme
         : 'dark',
     serverSelfSignedCert: serverSelfSignedCert || undefined,
+    syncServerConfig: syncServerConfig || undefined,
   };
 }
 
 async function saveMetadataPrefs(prefsToSet: MetadataPrefs) {
+  if (!prefsToSet) {
+    return 'ok';
+  }
+
   const { cloudFileId } = _getMetadataPrefs();
 
   // Need to sync the budget name on the server as well

@@ -3,7 +3,6 @@ export type FeatureFlag =
   | 'goalTemplatesUIEnabled'
   | 'actionTemplating'
   | 'contextMenus'
-  | 'openidAuth'
   | 'pluggyAiBankSync';
 
 /**
@@ -32,6 +31,7 @@ export type SyncedPrefs = Partial<
     | `csv-has-header-${string}`
     | `custom-sync-mappings-${string}`
     | `sync-import-pending-${string}`
+    | `sync-reimport-deleted-${string}`
     | `sync-import-notes-${string}`
     | `ofx-fallback-missing-payee-${string}`
     | `flip-amount-${string}-${'csv' | 'qif'}`
@@ -83,12 +83,18 @@ export type DarkTheme = 'dark' | 'midnight';
 export type GlobalPrefs = Partial<{
   floatingSidebar: boolean;
   maxMonths: number;
+  categoryExpandedState: number;
   keyId?: string;
   language: string;
   theme: Theme;
   preferredDarkTheme: DarkTheme;
   documentDir: string; // Electron only
   serverSelfSignedCert: string; // Electron only
+  syncServerConfig?: {
+    // Electron only
+    autoStart?: boolean;
+    port?: number;
+  };
 }>;
 
 // GlobalPrefsJson represents what's saved in the global-store.json file
@@ -103,12 +109,14 @@ export type GlobalPrefsJson = Partial<{
   'user-token'?: string;
   'floating-sidebar'?: string; // "true" or "false"
   'max-months'?: string; // e.g. "2" or "3"
+  'category-expanded-state'?: string; // "0" or "1" or "2"
   'document-dir'?: GlobalPrefs['documentDir'];
   'encrypt-key'?: string;
   language?: GlobalPrefs['language'];
   theme?: GlobalPrefs['theme'];
   'preferred-dark-theme'?: GlobalPrefs['preferredDarkTheme'];
   'server-self-signed-cert'?: GlobalPrefs['serverSelfSignedCert'];
+  syncServerConfig?: GlobalPrefs['syncServerConfig'];
 }>;
 
 export type AuthMethods = 'password' | 'openid';

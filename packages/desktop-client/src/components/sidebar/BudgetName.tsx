@@ -14,10 +14,11 @@ import { View } from '@actual-app/components/view';
 import { closeBudget } from 'loot-core/client/budgets/budgetsSlice';
 import * as Platform from 'loot-core/client/platform';
 
-import { useContextMenu } from '../../hooks/useContextMenu';
-import { useMetadataPref } from '../../hooks/useMetadataPref';
-import { useNavigate } from '../../hooks/useNavigate';
 import { useDispatch } from '../../redux';
+
+import { useContextMenu } from '@desktop-client/hooks/useContextMenu';
+import { useMetadataPref } from '@desktop-client/hooks/useMetadataPref';
+import { useNavigate } from '@desktop-client/hooks/useNavigate';
 
 type BudgetNameProps = {
   children?: ReactNode;
@@ -36,10 +37,12 @@ export function BudgetName({ children }: BudgetNameProps) {
         margin: '0 8px 23px 20px',
         userSelect: 'none',
         transition: 'padding .4s',
-        ...(hasWindowButtons && {
-          paddingTop: 20,
-          justifyContent: 'flex-start',
-        }),
+        ...(hasWindowButtons
+          ? {
+              paddingTop: 20,
+              justifyContent: 'flex-start',
+            }
+          : {}),
       }}
     >
       <EditableBudgetName />

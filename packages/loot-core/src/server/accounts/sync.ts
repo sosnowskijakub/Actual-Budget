@@ -20,7 +20,7 @@ import {
   SimpleFinBatchSyncResponse,
   TransactionEntity,
 } from '../../types/models';
-import { runQuery } from '../aql';
+import { aqlQuery } from '../aql';
 import * as db from '../db';
 import { runMutator } from '../mutators';
 import { post } from '../post';
@@ -75,7 +75,7 @@ async function updateAccountBalance(id, balance) {
 
 async function getAccountOldestTransaction(id): Promise<TransactionEntity> {
   return (
-    await runQuery(
+    await aqlQuery(
       q('transactions')
         .filter({
           account: id,
@@ -373,17 +373,17 @@ async function normalizeBankSyncTransactions(transactions, acctId) {
   const payeesToCreate = new Map();
 
   const [customMappingsRaw, importPending, importNotes] = await Promise.all([
-    runQuery(
+    aqlQuery(
       q('preferences')
         .filter({ id: `custom-sync-mappings-${acctId}` })
         .select('value'),
     ).then(data => data?.data?.[0]?.value),
-    runQuery(
+    aqlQuery(
       q('preferences')
         .filter({ id: `sync-import-pending-${acctId}` })
         .select('value'),
     ).then(data => String(data?.data?.[0]?.value ?? 'true') === 'true'),
-    runQuery(
+    aqlQuery(
       q('preferences')
         .filter({ id: `sync-import-notes-${acctId}` })
         .select('value'),
@@ -627,6 +627,12 @@ export async function matchTransactions(
 ) {
   console.log('Performing transaction reconciliation matching');
 
+  const reimportDeleted = await aqlQuery(
+    q('preferences')
+      .filter({ id: `sync-reimport-deleted-${acctId}` })
+      .select('value'),
+  ).then(data => String(data?.data?.[0]?.value ?? 'true') === 'true');
+
   const hasMatched = new Set();
 
   const transactionNormalization = isBankSyncAccount
@@ -658,8 +664,11 @@ export async function matchTransactions(
     // is the highest fidelity match and should always be attempted
     // first.
     if (trans.imported_id) {
-      match = await db.first<db.DbViewTransaction>(
-        'SELECT * FROM v_transactions WHERE imported_id = ? AND account = ?',
+      const table = reimportDeleted
+        ? 'v_transactions'
+        : 'v_transactions_internal';
+      match = await db.first<db.DbTransaction>(
+        `SELECT * FROM ${table} WHERE imported_id = ? AND account = ?`,
         [trans.imported_id, acctId],
       );
 

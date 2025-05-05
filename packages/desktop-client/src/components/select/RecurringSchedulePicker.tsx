@@ -30,11 +30,12 @@ import {
   type WithRequired,
 } from 'loot-core/types/util';
 
-import { useDateFormat } from '../../hooks/useDateFormat';
-import { useLocale } from '../../hooks/useLocale';
 import { Checkbox } from '../forms';
 
 import { DateSelect } from './DateSelect';
+
+import { useDateFormat } from '@desktop-client/hooks/useDateFormat';
+import { useLocale } from '@desktop-client/hooks/useLocale';
 
 // ex: There is no 6th Friday of the Month
 const MAX_DAY_OF_WEEK_INTERVAL = 5;
@@ -310,7 +311,7 @@ function MonthlyPatterns({
         >
           <Select
             options={[
-              [-1, 'Last'],
+              [-1, t('Last')],
               Menu.line,
               ...DAY_OF_MONTH_OPTIONS.map(opt => [opt, String(opt)] as const),
             ]}
@@ -327,7 +328,7 @@ function MonthlyPatterns({
           />
           <Select
             options={[
-              ['day', 'Day'],
+              ['day', t('Day')],
               Menu.line,
               ...DAY_OF_WEEK_OPTIONS.map(opt => [opt.id, opt.name] as const),
             ]}

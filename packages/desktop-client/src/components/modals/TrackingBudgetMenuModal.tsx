@@ -7,10 +7,10 @@ import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 
 import { type Modal as ModalType } from 'loot-core/client/modals/modalsSlice';
+import * as Platform from 'loot-core/client/platform';
 import { trackingBudget } from 'loot-core/client/queries';
 import { amountToInteger, integerToAmount } from 'loot-core/shared/util';
 
-import { useCategory } from '../../hooks/useCategory';
 import { BudgetMenu } from '../budget/tracking/BudgetMenu';
 import { useTrackingSheetValue } from '../budget/tracking/TrackingBudgetComponents';
 import {
@@ -20,6 +20,8 @@ import {
   ModalTitle,
 } from '../common/Modal';
 import { FocusableAmountInput } from '../mobile/transactions/FocusableAmountInput';
+
+import { useCategory } from '@desktop-client/hooks/useCategory';
 
 type TrackingBudgetMenuModalProps = Omit<
   Extract<ModalType, { name: 'tracking-budget-menu' }>['options'],
@@ -52,7 +54,11 @@ export function TrackingBudgetMenuModal({
   };
 
   useEffect(() => {
-    setAmountFocused(true);
+    // iOS does not support automatically opening up the keyboard for the
+    // total amount field. Hence we should not focus on it on page render.
+    if (!Platform.isIOSAgent) {
+      setAmountFocused(true);
+    }
   }, []);
 
   if (!category) {

@@ -1,5 +1,6 @@
 // @ts-strict-ignore
 import * as monthUtils from '../../shared/months';
+import { SyncedPrefs } from '../../types/prefs';
 import * as db from '../db';
 import { loadMappings } from '../db/mappings';
 import { post } from '../post';
@@ -8,16 +9,16 @@ import { loadRules, insertRule } from '../transactions/transaction-rules';
 
 import { reconcileTransactions, addTransactions } from './sync';
 
-jest.mock('../../shared/months', () => ({
-  ...jest.requireActual('../../shared/months'),
-  currentDay: jest.fn(),
-  currentMonth: jest.fn(),
+vi.mock('../../shared/months', async () => ({
+  ...(await vi.importActual('../../shared/months')),
+  currentDay: vi.fn(),
+  currentMonth: vi.fn(),
 }));
 
 beforeEach(async () => {
-  jest.resetAllMocks();
-  (monthUtils.currentDay as jest.Mock).mockReturnValue('2017-10-15');
-  (monthUtils.currentMonth as jest.Mock).mockReturnValue('2017-10');
+  vi.resetAllMocks();
+  vi.mocked(monthUtils.currentDay).mockReturnValue('2017-10-15');
+  vi.mocked(monthUtils.currentMonth).mockReturnValue('2017-10');
   await global.emptyDatabase()();
   await loadMappings();
   await loadRules();
@@ -121,6 +122,49 @@ describe('Account sync', () => {
     await expect(reconcileTransactions(acctId, [{}])).rejects.toThrow(
       /`date` is required/,
     );
+  });
+
+  test('reconcile doesnt rematch deleted transactions if reimport disabled', async () => {
+    const { id: acctId } = await prepareDatabase();
+    const reimportKey =
+      `sync-reimport-deleted-${acctId}` satisfies keyof SyncedPrefs;
+    await db.update('preferences', { id: reimportKey, value: 'false' });
+
+    await reconcileTransactions(acctId, [
+      { date: '2020-01-01', imported_id: 'finid' },
+    ]);
+
+    const transactions1 = await getAllTransactions();
+    expect(transactions1.length).toBe(1);
+
+    await db.deleteTransaction(transactions1[0]);
+
+    await reconcileTransactions(acctId, [
+      { date: '2020-01-01', imported_id: 'finid' },
+    ]);
+    const transactions2 = await getAllTransactions();
+    expect(transactions2.length).toBe(1);
+    expect(transactions2).toMatchSnapshot();
+  });
+
+  test('reconcile does rematch deleted transactions by default', async () => {
+    const { id: acctId } = await prepareDatabase();
+
+    await reconcileTransactions(acctId, [
+      { date: '2020-01-01', imported_id: 'finid' },
+    ]);
+
+    const transactions1 = await getAllTransactions();
+    expect(transactions1.length).toBe(1);
+
+    await db.deleteTransaction(transactions1[0]);
+
+    await reconcileTransactions(acctId, [
+      { date: '2020-01-01', imported_id: 'finid' },
+    ]);
+    const transactions2 = await getAllTransactions();
+    expect(transactions2.length).toBe(2);
+    expect(transactions2).toMatchSnapshot();
   });
 
   test('reconcile run rules with inferred payee', async () => {

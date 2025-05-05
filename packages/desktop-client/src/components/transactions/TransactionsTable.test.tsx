@@ -29,11 +29,12 @@ import {
 } from 'loot-core/types/models';
 
 import { AuthProvider } from '../../auth/AuthProvider';
-import { SelectedProviderWithItems } from '../../hooks/useSelected';
-import { SplitsExpandedProvider } from '../../hooks/useSplitsExpanded';
 import { TestProvider } from '../../redux/mock';
 
 import { TransactionTable } from './TransactionsTable';
+
+import { SelectedProviderWithItems } from '@desktop-client/hooks/useSelected';
+import { SplitsExpandedProvider } from '@desktop-client/hooks/useSplitsExpanded';
 
 vi.mock('loot-core/platform/client/fetch');
 vi.mock('../../hooks/useFeatureFlag', () => ({
@@ -239,10 +240,14 @@ function initBasicServer() {
           throw new Error(`queried unknown table: ${query.table}`);
       }
     },
-    getCell: () => ({
+    'get-cell': async () => ({
+      name: 'test-cell',
       value: 129_87,
     }),
-    'get-categories': () => ({ grouped: categoryGroups, list: categories }),
+    'get-categories': async () => ({
+      grouped: categoryGroups,
+      list: categories,
+    }),
   });
 }
 

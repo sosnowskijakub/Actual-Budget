@@ -84,6 +84,7 @@ export const schema = {
     is_income: f('boolean'),
     hidden: f('boolean'),
     group: f('id', { ref: 'category_groups' }),
+    goal_def: f('string'),
     sort_order: f('float'),
     tombstone: f('boolean'),
   },
@@ -248,6 +249,10 @@ export const schemaConfig: SchemaConfig = {
             { sort_order: 'desc' },
             'id',
           ];
+        case 'category_groups':
+          return ['is_income', 'sort_order', 'id'];
+        case 'categories':
+          return ['sort_order', 'id'];
         case 'payees':
           return [
             { $condition: { transfer_acct: null }, $dir: 'desc' },

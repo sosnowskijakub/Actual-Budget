@@ -16,14 +16,13 @@ import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 
-import { signOut } from 'loot-core/client/actions';
 import { pushModal } from 'loot-core/client/modals/modalsSlice';
 import { addNotification } from 'loot-core/client/notifications/notificationsSlice';
+import { signOut } from 'loot-core/client/users/usersSlice';
 import { send } from 'loot-core/platform/client/fetch';
 import * as undo from 'loot-core/platform/client/undo';
 import { type NewUserEntity, type UserEntity } from 'loot-core/types/models';
 
-import { SelectedProvider, useSelected } from '../../../hooks/useSelected';
 import { useDispatch } from '../../../redux';
 import { InfiniteScrollWrapper } from '../../common/InfiniteScrollWrapper';
 import { Link } from '../../common/Link';
@@ -31,6 +30,11 @@ import { Search } from '../../common/Search';
 
 import { UserDirectoryHeader } from './UserDirectoryHeader';
 import { UserDirectoryRow } from './UserDirectoryRow';
+
+import {
+  SelectedProvider,
+  useSelected,
+} from '@desktop-client/hooks/useSelected';
 
 type ManageUserDirectoryContentProps = {
   isModal: boolean;
@@ -174,7 +178,9 @@ function UserDirectoryContent({
               message: getUserDirectoryErrors(error),
               button: {
                 title: t('Go to login'),
-                action: () => dispatch(signOut()),
+                action: () => {
+                  dispatch(signOut());
+                },
               },
             },
           }),

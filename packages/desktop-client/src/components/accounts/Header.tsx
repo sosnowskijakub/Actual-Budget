@@ -5,7 +5,7 @@ import React, {
   type ReactNode,
   type ComponentProps,
 } from 'react';
-import { DialogTrigger } from 'react-aria-components';
+import { Dialog, DialogTrigger } from 'react-aria-components';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -40,10 +40,6 @@ import {
   type TransactionFilterEntity,
 } from 'loot-core/types/models';
 
-import { useLocale } from '../../hooks/useLocale';
-import { useLocalPref } from '../../hooks/useLocalPref';
-import { useSplitsExpanded } from '../../hooks/useSplitsExpanded';
-import { useSyncServerStatus } from '../../hooks/useSyncServerStatus';
 import { AnimatedRefresh } from '../AnimatedRefresh';
 import { Search } from '../common/Search';
 import { FilterButton } from '../filters/FiltersMenu';
@@ -56,9 +52,13 @@ import { type TableRef } from './Account';
 import { Balances } from './Balance';
 import { ReconcilingMessage, ReconcileMenu } from './Reconcile';
 
+import { useLocale } from '@desktop-client/hooks/useLocale';
+import { useLocalPref } from '@desktop-client/hooks/useLocalPref';
+import { useSplitsExpanded } from '@desktop-client/hooks/useSplitsExpanded';
+import { useSyncServerStatus } from '@desktop-client/hooks/useSyncServerStatus';
+
 type AccountHeaderProps = {
   tableRef: TableRef;
-  editingName: boolean;
   isNameEditable: boolean;
   workingHard: boolean;
   accountName: string;
@@ -97,7 +97,6 @@ type AccountHeaderProps = {
   >['onToggleExtraBalances'];
   onSaveName: AccountNameFieldProps['onSaveName'];
   saveNameError: AccountNameFieldProps['saveNameError'];
-  onExposeName: (isExposed: boolean) => void;
   onSync: () => void;
   onImport: () => void;
   onMenuSelect: AccountMenuProps['onMenuSelect'];
@@ -122,6 +121,7 @@ type AccountHeaderProps = {
   | 'onSetTransfer'
   | 'onMakeAsSplitTransaction'
   | 'onMakeAsNonSplitTransactions'
+  | 'onMergeTransactions'
 > &
   Pick<
     ComponentProps<typeof FiltersStack>,
@@ -134,7 +134,6 @@ type AccountHeaderProps = {
 
 export function AccountHeader({
   tableRef,
-  editingName,
   isNameEditable,
   workingHard,
   accountName,
@@ -167,7 +166,6 @@ export function AccountHeader({
   onToggleExtraBalances,
   onSaveName,
   saveNameError,
-  onExposeName,
   onSync,
   onImport,
   onMenuSelect,
@@ -189,6 +187,7 @@ export function AccountHeader({
   onRunRules,
   onMakeAsSplitTransaction,
   onMakeAsNonSplitTransactions,
+  onMergeTransactions,
 }: AccountHeaderProps) {
   const { t } = useTranslation();
 
@@ -289,10 +288,8 @@ export function AccountHeader({
               account={account}
               accountName={accountName}
               isNameEditable={isNameEditable}
-              editingName={editingName}
               saveNameError={saveNameError}
               onSaveName={onSaveName}
-              onExposeName={onExposeName}
             />
           </View>
         </View>
@@ -379,6 +376,7 @@ export function AccountHeader({
               showMakeTransfer={showMakeTransfer}
               onMakeAsSplitTransaction={onMakeAsSplitTransaction}
               onMakeAsNonSplitTransactions={onMakeAsNonSplitTransactions}
+              onMergeTransactions={onMergeTransactions}
             />
           )}
           <View style={{ flex: '0 0 auto', marginLeft: 10 }}>
@@ -434,7 +432,6 @@ export function AccountHeader({
                 ? t('Collapse split transactions')
                 : t('Expand split transactions')
             }
-            isDisabled={search !== '' || filterConditions.length > 0}
             style={{ padding: 6 }}
             onPress={onToggleSplits}
           >
@@ -464,18 +461,20 @@ export function AccountHeader({
                 </Button>
 
                 <Popover style={{ width: 275 }}>
-                  <AccountMenu
-                    account={account}
-                    canSync={canSync}
-                    canShowBalances={
-                      canCalculateBalance ? canCalculateBalance() : false
-                    }
-                    isSorted={isSorted}
-                    showBalances={showBalances}
-                    showCleared={showCleared}
-                    showReconciled={showReconciled}
-                    onMenuSelect={onMenuSelect}
-                  />
+                  <Dialog>
+                    <AccountMenu
+                      account={account}
+                      canSync={canSync}
+                      canShowBalances={
+                        canCalculateBalance ? canCalculateBalance() : false
+                      }
+                      isSorted={isSorted}
+                      showBalances={showBalances}
+                      showCleared={showCleared}
+                      showReconciled={showReconciled}
+                      onMenuSelect={onMenuSelect}
+                    />
+                  </Dialog>
                 </Popover>
               </DialogTrigger>
             </View>
@@ -491,20 +490,23 @@ export function AccountHeader({
                 </Button>
 
                 <Popover>
-                  <Menu
-                    onMenuSelect={onMenuSelect}
-                    items={[
-                      ...(isSorted
-                        ? [
-                            {
-                              name: 'remove-sorting',
-                              text: t('Remove all sorting'),
-                            } as const,
-                          ]
-                        : []),
-                      { name: 'export', text: t('Export') },
-                    ]}
-                  />
+                  <Dialog>
+                    <Menu
+                      slot="close"
+                      onMenuSelect={onMenuSelect}
+                      items={[
+                        ...(isSorted
+                          ? [
+                              {
+                                name: 'remove-sorting',
+                                text: t('Remove all sorting'),
+                              } as const,
+                            ]
+                          : []),
+                        { name: 'export', text: t('Export') },
+                      ]}
+                    />
+                  </Dialog>
                 </Popover>
               </DialogTrigger>
             </View>
@@ -575,22 +577,24 @@ type AccountNameFieldProps = {
   account?: AccountEntity;
   accountName: string;
   isNameEditable: boolean;
-  editingName: boolean;
   saveNameError?: ReactNode;
   onSaveName: (newName: string) => void;
-  onExposeName: (isExposed: boolean) => void;
 };
 
 function AccountNameField({
   account,
   accountName,
   isNameEditable,
-  editingName,
   saveNameError,
   onSaveName,
-  onExposeName,
 }: AccountNameFieldProps) {
   const { t } = useTranslation();
+  const [editingName, setEditingName] = useState(false);
+
+  const handleSave = (newName: string) => {
+    onSaveName(newName);
+    setEditingName(false);
+  };
 
   if (editingName) {
     return (
@@ -598,9 +602,9 @@ function AccountNameField({
         <InitialFocus>
           <Input
             defaultValue={accountName}
-            onEnter={e => onSaveName(e.currentTarget.value)}
-            onBlur={e => onSaveName(e.target.value)}
-            onEscape={() => onExposeName(false)}
+            onEnter={e => handleSave(e.currentTarget.value)}
+            onBlur={e => handleSave(e.target.value)}
+            onEscape={() => setEditingName(false)}
             style={{
               fontSize: 25,
               fontWeight: 500,
@@ -659,7 +663,7 @@ function AccountNameField({
             variant="bare"
             aria-label={t('Edit account name')}
             className="hover-visible"
-            onPress={() => onExposeName(true)}
+            onPress={() => setEditingName(true)}
           >
             <SvgPencil1
               style={{
@@ -723,6 +727,7 @@ function AccountMenu({
 
   return (
     <Menu
+      slot="close"
       onMenuSelect={item => {
         onMenuSelect(item);
       }}

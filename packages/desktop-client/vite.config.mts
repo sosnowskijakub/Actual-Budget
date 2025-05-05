@@ -165,6 +165,7 @@ export default defineConfig(async ({ mode }) => {
               ],
               ignoreURLParametersMatching: [/^v$/],
               navigateFallback: '/index.html',
+              maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
               navigateFallbackDenylist: [
                 /^\/account\/.*$/,
                 /^\/admin\/.*$/,
@@ -193,6 +194,10 @@ export default defineConfig(async ({ mode }) => {
       environment: 'jsdom',
       globals: true,
       setupFiles: './src/setupTests.js',
+      onConsoleLog(log: string, type: 'stdout' | 'stderr'): boolean | void {
+        // print only console.error
+        return type === 'stderr';
+      },
     },
   };
 });
