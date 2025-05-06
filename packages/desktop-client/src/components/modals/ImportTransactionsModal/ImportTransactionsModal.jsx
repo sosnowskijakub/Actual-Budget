@@ -262,6 +262,7 @@ export function ImportTransactionsModal({
           ignored,
           selected,
           selected_merge,
+          tombstone,
           ...finalTransaction
         } = trans;
         previewTransactions.push({
