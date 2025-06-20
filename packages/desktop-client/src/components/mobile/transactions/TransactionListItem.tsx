@@ -29,23 +29,25 @@ import {
   useLongPress,
 } from '@react-aria/interactions';
 
-import { useCachedSchedules } from 'loot-core/client/data-hooks/schedules';
 import { isPreviewId } from 'loot-core/shared/transactions';
-import { integerToCurrency } from 'loot-core/shared/util';
+import { type IntegerAmount, integerToCurrency } from 'loot-core/shared/util';
 import {
   type AccountEntity,
   type TransactionEntity,
 } from 'loot-core/types/models';
 
-import { useSelector } from '../../../redux';
-import { makeAmountFullStyle } from '../../budget/util';
-
 import { lookupName, Status } from './TransactionEdit';
 
+import {
+  makeAmountFullStyle,
+  makeBalanceAmountStyle,
+} from '@desktop-client/components/budget/util';
 import { useAccount } from '@desktop-client/hooks/useAccount';
+import { useCachedSchedules } from '@desktop-client/hooks/useCachedSchedules';
 import { useCategories } from '@desktop-client/hooks/useCategories';
 import { useDisplayPayee } from '@desktop-client/hooks/useDisplayPayee';
 import { usePayee } from '@desktop-client/hooks/usePayee';
+import { useSelector } from '@desktop-client/redux';
 
 const ROW_HEIGHT = 60;
 
@@ -74,11 +76,13 @@ const getScheduleIconStyle = ({ isPreview }: { isPreview: boolean }) => ({
 type TransactionListItemProps = ComponentPropsWithoutRef<
   typeof ListBoxItem<TransactionEntity>
 > & {
+  balance: IntegerAmount | null;
   onPress: (transaction: TransactionEntity) => void;
   onLongPress: (transaction: TransactionEntity) => void;
 };
 
 export function TransactionListItem({
+  balance,
   onPress,
   onLongPress,
   ...props
@@ -283,7 +287,7 @@ export function TransactionListItem({
                   </TextOneLine>
                 )}
               </View>
-              <View style={{ justifyContent: 'center' }}>
+              <View style={{ textAlign: 'right' }}>
                 <Text
                   style={{
                     ...textStyle,
@@ -292,6 +296,17 @@ export function TransactionListItem({
                 >
                   {integerToCurrency(amount)}
                 </Text>
+                {balance != null && (
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: '400',
+                      ...makeBalanceAmountStyle(balance || 0),
+                    }}
+                  >
+                    {integerToCurrency(balance)}
+                  </Text>
+                )}
               </View>
             </View>
           </Button>

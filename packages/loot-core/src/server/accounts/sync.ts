@@ -66,9 +66,9 @@ function getAccountBalance(account) {
   }
 }
 
-async function updateAccountBalance(id, balance) {
+async function updateAccountBalance(id: AccountEntity['id'], balance: number) {
   await db.runQuery('UPDATE accounts SET balance_current = ? WHERE id = ?', [
-    amountToInteger(balance),
+    balance,
     id,
   ]);
 }
@@ -888,12 +888,17 @@ async function processBankSyncDownload(
   // that account sync sources can give two different transaction IDs even though it's the same transaction.
   const useStrictIdChecking = !acctRow.account_sync_source;
 
+  /** Starting balance is actually the current balance of the account. */
+  const {
+    transactions: originalTransactions,
+    startingBalance: currentBalance,
+  } = download;
+
   if (initialSync) {
     const { transactions } = download;
-    let balanceToUse = download.startingBalance;
+    let balanceToUse = currentBalance;
 
     if (acctRow.account_sync_source === 'simpleFin') {
-      const currentBalance = download.startingBalance;
       const previousBalance = transactions.reduce((total, trans) => {
         return (
           total - parseInt(trans.transactionAmount.amount.replace('.', ''))
@@ -944,8 +949,6 @@ async function processBankSyncDownload(
     });
   }
 
-  const { transactions: originalTransactions, accountBalance } = download;
-
   if (originalTransactions.length === 0) {
     return { added: [], updated: [] };
   }
@@ -963,7 +966,8 @@ async function processBankSyncDownload(
       useStrictIdChecking,
     );
 
-    if (accountBalance) await updateAccountBalance(id, accountBalance);
+    /** Starting balance is actually the current balance of the account. */
+    if (currentBalance) await updateAccountBalance(id, currentBalance);
 
     return result;
   });

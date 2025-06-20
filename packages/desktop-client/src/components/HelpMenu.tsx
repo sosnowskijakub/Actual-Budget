@@ -1,7 +1,7 @@
 import { forwardRef, useRef } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Trans, useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import { Button } from '@actual-app/components/button';
 import { SvgHelp } from '@actual-app/components/icons/v2';
@@ -10,11 +10,9 @@ import { Popover } from '@actual-app/components/popover';
 import { SpaceBetween } from '@actual-app/components/space-between';
 import { useToggle } from 'usehooks-ts';
 
-import { pushModal } from 'loot-core/client/modals/modalsSlice';
-
-import { useDispatch } from '../redux';
-
 import { useFeatureFlag } from '@desktop-client/hooks/useFeatureFlag';
+import { pushModal } from '@desktop-client/modals/modalsSlice';
+import { useDispatch } from '@desktop-client/redux';
 
 const getPageDocs = (page: string) => {
   switch (page) {

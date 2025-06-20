@@ -13,30 +13,31 @@ import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
 import { css, cx } from '@emotion/css';
 
-import { openAccountCloseModal } from 'loot-core/client/modals/modalsSlice';
-import * as Platform from 'loot-core/client/platform';
-import {
-  reopenAccount,
-  updateAccount,
-} from 'loot-core/client/queries/queriesSlice';
+import * as Platform from 'loot-core/shared/platform';
 import { type AccountEntity } from 'loot-core/types/models';
 
-import { useDispatch } from '../../redux';
-import { Link } from '../common/Link';
-import { Notes } from '../Notes';
+import { BalanceHistoryGraph } from './BalanceHistoryGraph';
+
+import { Link } from '@desktop-client/components/common/Link';
+import { Notes } from '@desktop-client/components/Notes';
 import {
+  DropHighlight,
   useDraggable,
   useDroppable,
-  DropHighlight,
   type OnDragChangeCallback,
   type OnDropCallback,
-} from '../sort';
-import { type SheetFields, type Binding } from '../spreadsheet';
-import { CellValue } from '../spreadsheet/CellValue';
-
+} from '@desktop-client/components/sort';
+import { CellValue } from '@desktop-client/components/spreadsheet/CellValue';
 import { useContextMenu } from '@desktop-client/hooks/useContextMenu';
 import { useDragRef } from '@desktop-client/hooks/useDragRef';
 import { useNotes } from '@desktop-client/hooks/useNotes';
+import { openAccountCloseModal } from '@desktop-client/modals/modalsSlice';
+import {
+  reopenAccount,
+  updateAccount,
+} from '@desktop-client/queries/queriesSlice';
+import { useDispatch } from '@desktop-client/redux';
+import { type SheetFields, type Binding } from '@desktop-client/spreadsheet';
 
 export const accountNameStyle: CSSProperties = {
   marginTop: -2,
@@ -197,9 +198,7 @@ export function Account<FieldName extends SheetFields<'account'>>({
                         width: '100%',
                       }}
                       onBlur={() => setIsEditing(false)}
-                      onEnter={e => {
-                        const inputEl = e.target as HTMLInputElement;
-                        const newAccountName = inputEl.value;
+                      onEnter={newAccountName => {
                         if (newAccountName.trim() !== '') {
                           dispatch(
                             updateAccount({
@@ -282,16 +281,18 @@ export function Account<FieldName extends SheetFields<'account'>>({
           <Text
             style={{
               fontWeight: 'bold',
-              borderBottom: accountNote ? `1px solid ${theme.tableBorder}` : 0,
-              marginBottom: accountNote ? '0.5rem' : 0,
             }}
           >
             {name}
           </Text>
+          {account && <BalanceHistoryGraph accountId={account.id} />}
           {accountNote && (
             <Notes
               getStyle={() => ({
+                borderTop: `1px solid ${theme.tableBorder}`,
                 padding: 0,
+                paddingTop: '0.5rem',
+                marginTop: '0.5rem',
               })}
               notes={accountNote}
             />

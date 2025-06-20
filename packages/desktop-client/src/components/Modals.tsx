@@ -1,16 +1,14 @@
 // @ts-strict-ignore
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
-import { closeModal } from 'loot-core/client/modals/modalsSlice';
 import { send } from 'loot-core/platform/client/fetch';
 import * as monthUtils from 'loot-core/shared/months';
-
-import { useDispatch } from '../redux';
 
 import { EditSyncAccount } from './banksync/EditSyncAccount';
 import { AccountAutocompleteModal } from './modals/AccountAutocompleteModal';
 import { AccountMenuModal } from './modals/AccountMenuModal';
+import { BudgetAutomationsModal } from './modals/BudgetAutomationsModal';
 import { BudgetFileSelectionModal } from './modals/BudgetFileSelectionModal';
 import { BudgetPageMenuModal } from './modals/BudgetPageMenuModal';
 import { CategoryAutocompleteModal } from './modals/CategoryAutocompleteModal';
@@ -33,6 +31,7 @@ import { EnvelopeBalanceMenuModal } from './modals/EnvelopeBalanceMenuModal';
 import { EnvelopeBudgetMenuModal } from './modals/EnvelopeBudgetMenuModal';
 import { EnvelopeBudgetMonthMenuModal } from './modals/EnvelopeBudgetMonthMenuModal';
 import { EnvelopeBudgetSummaryModal } from './modals/EnvelopeBudgetSummaryModal';
+import { EnvelopeIncomeBalanceMenuModal } from './modals/EnvelopeIncomeBalanceMenuModal';
 import { EnvelopeToBudgetMenuModal } from './modals/EnvelopeToBudgetMenuModal';
 import { FixEncryptionKeyModal } from './modals/FixEncryptionKeyModal';
 import { GoalTemplateModal } from './modals/GoalTemplateModal';
@@ -75,10 +74,12 @@ import { PostsOfflineNotification } from './schedules/PostsOfflineNotification';
 import { ScheduleDetails } from './schedules/ScheduleDetails';
 import { ScheduleLink } from './schedules/ScheduleLink';
 import { UpcomingLength } from './schedules/UpcomingLength';
-import { NamespaceContext } from './spreadsheet/NamespaceContext';
 
 import { useMetadataPref } from '@desktop-client/hooks/useMetadataPref';
 import { useModalState } from '@desktop-client/hooks/useModalState';
+import { SheetNameProvider } from '@desktop-client/hooks/useSheetName';
+import { closeModal } from '@desktop-client/modals/modalsSlice';
+import { useDispatch } from '@desktop-client/redux';
 
 export function Modals() {
   const location = useLocation();
@@ -99,6 +100,9 @@ export function Modals() {
       switch (name) {
         case 'goal-templates':
           return budgetId ? <GoalTemplateModal key={key} /> : null;
+
+        case 'category-automations-edit':
+          return budgetId ? <BudgetAutomationsModal key={name} /> : null;
 
         case 'keyboard-shortcuts':
           // don't show the hotkey help modal when a budget is not open
@@ -200,12 +204,12 @@ export function Modals() {
 
         case 'envelope-budget-summary':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <EnvelopeBudgetSummaryModal key={key} {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
           );
 
         case 'tracking-budget-summary':
@@ -237,22 +241,22 @@ export function Modals() {
 
         case 'envelope-budget-menu':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <EnvelopeBudgetMenuModal {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
           );
 
         case 'tracking-budget-menu':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <TrackingBudgetMenuModal {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
           );
 
         case 'category-group-menu':
@@ -263,42 +267,52 @@ export function Modals() {
 
         case 'envelope-balance-menu':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <EnvelopeBalanceMenuModal {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
+          );
+
+        case 'envelope-income-balance-menu':
+          return (
+            <SheetNameProvider
+              key={key}
+              name={monthUtils.sheetForMonth(modal.options.month)}
+            >
+              <EnvelopeIncomeBalanceMenuModal {...modal.options} />
+            </SheetNameProvider>
           );
 
         case 'envelope-summary-to-budget-menu':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <EnvelopeToBudgetMenuModal {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
           );
 
         case 'hold-buffer':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <HoldBufferModal {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
           );
 
         case 'tracking-balance-menu':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <TrackingBalanceMenuModal {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
           );
 
         case 'transfer':
@@ -315,22 +329,22 @@ export function Modals() {
 
         case 'envelope-budget-month-menu':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <EnvelopeBudgetMonthMenuModal {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
           );
 
         case 'tracking-budget-month-menu':
           return (
-            <NamespaceContext.Provider
+            <SheetNameProvider
               key={key}
-              value={monthUtils.sheetForMonth(modal.options.month)}
+              name={monthUtils.sheetForMonth(modal.options.month)}
             >
               <TrackingBudgetMonthMenuModal {...modal.options} />
-            </NamespaceContext.Provider>
+            </SheetNameProvider>
           );
 
         case 'budget-file-selection':

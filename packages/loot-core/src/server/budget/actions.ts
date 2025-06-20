@@ -49,8 +49,8 @@ export function isReflectBudget(): boolean {
     `SELECT value FROM preferences WHERE id = ?`,
     ['budgetType'],
   );
-  const val = budgetType ? budgetType.value : 'rollover';
-  return val === 'report';
+  const val = budgetType ? budgetType.value : 'envelope';
+  return val === 'tracking';
 }
 
 function dbMonth(month: string): number {
@@ -597,5 +597,22 @@ async function addMovementNotes({
   await db.update('notes', {
     id: monthBudgetNotesId,
     note: `${existingMonthBudgetNotes}- ${note}`,
+  });
+}
+
+export async function resetIncomeCarryover({
+  month,
+}: {
+  month: string;
+}): Promise<void> {
+  const table = getBudgetTable();
+  const categories = await db.all<db.DbViewCategory>(
+    'SELECT * FROM v_categories WHERE is_income = 1 AND tombstone = 0',
+  );
+
+  await batchMessages(async () => {
+    for (const category of categories) {
+      await setCarryover(table, category.id, dbMonth(month).toString(), false);
+    }
   });
 }

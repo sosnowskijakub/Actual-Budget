@@ -15,6 +15,9 @@ const options = {
     type: 'boolean',
     short: 'v',
   },
+  'reset-password': {
+    type: 'boolean',
+  },
   config: {
     type: 'string',
   },
@@ -52,7 +55,7 @@ if (values.help) {
 
 if (values.version) {
   const __dirname = dirname(fileURLToPath(import.meta.url));
-  const packageJsonPath = resolve(__dirname, '../package.json');
+  const packageJsonPath = resolve(__dirname, '../../package.json');
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
   console.log('v' + packageJson.version);
@@ -71,12 +74,12 @@ const setupDataDir = (dataDir = undefined) => {
     if (existsSync('./data')) {
       // The default data directory exists - use it
       console.info('Found existing data directory');
-      process.env.ACTUAL_DATA_DIR = './data';
+      process.env.ACTUAL_DATA_DIR = resolve('./data');
     } else {
       console.info(
         'Using default data directory. You can specify a custom config with --config',
       );
-      process.env.ACTUAL_DATA_DIR = './';
+      process.env.ACTUAL_DATA_DIR = resolve('./');
     }
 
     console.info(`Data directory: ${process.env.ACTUAL_DATA_DIR}`);
@@ -111,6 +114,12 @@ if (values.config) {
   } else {
     setupDataDir(); // No default config exists - setup data dir with defaults
   }
+}
+
+if (values['reset-password']) {
+  console.info('Running reset password script...');
+  await import('../src/scripts/reset-password.js');
+  process.exit();
 }
 
 // start the sync server

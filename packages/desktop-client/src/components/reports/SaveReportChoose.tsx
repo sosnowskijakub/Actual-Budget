@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Form } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 
@@ -8,14 +8,14 @@ import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 
-import { GenericInput } from '../util/GenericInput';
+import { GenericInput } from '@desktop-client/components/util/GenericInput';
 
 type SaveReportChooseProps = {
   onApply: (cond: string) => void;
 };
 
 export function SaveReportChoose({ onApply }: SaveReportChooseProps) {
-  const inputRef = createRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState('');
   const [value, setValue] = useState('');
   const { t } = useTranslation();
@@ -24,7 +24,7 @@ export function SaveReportChoose({ onApply }: SaveReportChooseProps) {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  });
+  }, []);
 
   return (
     <>
@@ -47,7 +47,7 @@ export function SaveReportChoose({ onApply }: SaveReportChooseProps) {
           <View style={{ flex: 1 }} />
         </View>
         <GenericInput
-          inputRef={inputRef}
+          ref={inputRef}
           field="report"
           subfield={null}
           type="saved"

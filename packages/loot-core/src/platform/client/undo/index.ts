@@ -1,6 +1,8 @@
+// This is temporary until we move all loot-core/client over to desktop-client.
+// eslint-disable-next-line no-restricted-imports
+import { Modal } from '@actual-app/web/src/modals/modalsSlice';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Modal } from '../../../client/modals/modalsSlice';
 import { UndoState as ServerUndoState } from '../../../server/undo';
 
 type UndoState = {
@@ -14,7 +16,7 @@ type UndoState = {
 };
 
 type UndoStateWithId = UndoState & {
-  id?: ReturnType<typeof uuidv4>;
+  id?: string;
 };
 
 // List of recently used states. We don't use a true MRU structure

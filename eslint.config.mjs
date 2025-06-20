@@ -9,6 +9,7 @@ import pluginReact from 'eslint-plugin-react';
 import pluginReactHooks from 'eslint-plugin-react-hooks';
 import pluginRulesDir from 'eslint-plugin-rulesdir';
 import pluginTypescript from 'typescript-eslint';
+import pluginTypescriptPaths from 'eslint-plugin-typescript-paths';
 
 import tsParser from '@typescript-eslint/parser';
 
@@ -84,8 +85,7 @@ const confusingBrowserGlobals = [
   'top',
 ];
 
-/** @type {import('eslint').Linter.Config[]} */
-export default [
+export default pluginTypescript.config(
   {
     ignores: [
       'packages/api/app/bundle.api.js',
@@ -108,11 +108,10 @@ export default [
       'packages/desktop-electron/client-build/',
       'packages/desktop-electron/build/',
       'packages/desktop-electron/dist/',
-      'packages/import-ynab4/**/node_modules/*',
-      'packages/import-ynab5/**/node_modules/*',
       'packages/loot-core/**/node_modules/*',
       'packages/loot-core/**/lib-dist/*',
       'packages/loot-core/**/proto/*',
+      'packages/sync-server/build/',
       '.yarn/*',
       '.github/*',
     ],
@@ -120,8 +119,8 @@ export default [
   {
     // Temporary until the sync-server is migrated to TypeScript
     files: [
-      'packages/sync-server/**/*.spec.js?(x)',
-      'packages/sync-server/**/*.test.js?(x)',
+      'packages/sync-server/**/*.spec.{js,jsx}',
+      'packages/sync-server/**/*.test.{js,jsx}',
     ],
     languageOptions: {
       globals: {
@@ -164,13 +163,14 @@ export default [
   },
   pluginReact.configs.flat.recommended,
   pluginReact.configs.flat['jsx-runtime'],
-  ...pluginTypescript.configs.recommended,
+  pluginTypescript.configs.recommended,
   pluginImport.flatConfigs.recommended,
   {
     plugins: {
       'react-hooks': pluginReactHooks,
       'jsx-a11y': pluginJSXA11y,
       rulesdir: pluginRulesDir,
+      'typescript-paths': pluginTypescriptPaths,
     },
   },
   {
@@ -503,6 +503,32 @@ export default [
       'no-restricted-imports': [
         'warn',
         {
+          paths: [
+            {
+              name: 'react-router',
+              importNames: ['useNavigate'],
+              message:
+                "Please import Actual's useNavigate() hook from `src/hooks` instead.",
+            },
+            {
+              name: 'react-redux',
+              importNames: ['useDispatch'],
+              message:
+                "Please import Actual's useDispatch() hook from `src/redux` instead.",
+            },
+            {
+              name: 'react-redux',
+              importNames: ['useSelector'],
+              message:
+                "Please import Actual's useSelector() hook from `src/redux` instead.",
+            },
+            {
+              name: 'react-redux',
+              importNames: ['useStore'],
+              message:
+                "Please import Actual's useStore() hook from `src/redux` instead.",
+            },
+          ],
           patterns: [
             {
               group: ['*.api', '*.web', '*.electron'],
@@ -517,6 +543,10 @@ export default [
               group: ['**/style', '**/colors'],
               importNames: ['colors'],
               message: 'Please use themes instead of colors',
+            },
+            {
+              group: ['@actual-app/web/*'],
+              message: 'Please do not import `@actual-app/web` in `loot-core`',
             },
           ],
         },
@@ -539,7 +569,7 @@ export default [
     },
   },
   {
-    files: ['**/*.ts?(x)'],
+    files: ['**/*.{ts,tsx}'],
 
     languageOptions: {
       parser: tsParser,
@@ -608,6 +638,16 @@ export default [
     },
   },
   {
+    files: ['packages/desktop-client/**/*.{js,ts,jsx,tsx}'],
+    rules: {
+      'typescript-paths/absolute-parent-import': [
+        'error',
+        { preferPathOverBaseUrl: true },
+      ],
+      'typescript-paths/absolute-import': ['error', { enableAlias: false }],
+    },
+  },
+  {
     files: [
       'packages/desktop-client/**/*.{ts,tsx}',
       'packages/loot-core/src/client/**/*.{ts,tsx}',
@@ -642,88 +682,6 @@ export default [
     },
   },
   {
-    files: ['packages/desktop-client/**/*'],
-    ignores: ['packages/desktop-client/src/hooks/useNavigate.{ts,tsx}'],
-
-    rules: {
-      'no-restricted-imports': [
-        'warn',
-        {
-          paths: [
-            {
-              name: 'react-router-dom',
-              importNames: ['useNavigate'],
-              message:
-                "Please import Actual's useNavigate() hook from `src/hooks` instead.",
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    files: ['packages/desktop-client/**/*', 'packages/loot-core/**/*'],
-    ignores: ['packages/desktop-client/src/redux/index.{ts,tsx}'],
-
-    rules: {
-      'no-restricted-imports': [
-        'warn',
-        {
-          paths: [
-            {
-              name: 'react-redux',
-              importNames: ['useDispatch'],
-              message:
-                "Please import Actual's useDispatch() hook from `src/redux` instead.",
-            },
-            {
-              name: 'react-redux',
-              importNames: ['useSelector'],
-              message:
-                "Please import Actual's useSelector() hook from `src/redux` instead.",
-            },
-            {
-              name: 'react-redux',
-              importNames: ['useStore'],
-              message:
-                "Please import Actual's useStore() hook from `src/redux` instead.",
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    files: ['packages/loot-core/src/**/*'],
-    rules: {
-      'no-restricted-imports': [
-        'warn',
-        {
-          patterns: [
-            {
-              group: ['*.api', '*.web', '*.electron'],
-              message: "Don't directly reference imports from other platforms",
-            },
-            {
-              group: ['uuid'],
-              importNames: ['*'],
-              message: "Use `import { v4 as uuidv4 } from 'uuid'` instead",
-            },
-            {
-              group: ['loot-core/**'],
-              message:
-                'Please use relative imports in loot-core instead of importing from `loot-core/*`',
-            },
-            {
-              group: ['@actual-app/web/*'],
-              message: 'Please do not import `@actual-app/web` in `loot-core`',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
     files: [
       'packages/loot-core/src/types/**/*',
       'packages/loot-core/src/client/state-types/**/*',
@@ -735,27 +693,6 @@ export default [
 
     rules: {
       'import/no-unused-modules': 'off',
-    },
-  },
-  {
-    files: [
-      'packages/desktop-client/src/style/index.*',
-      'packages/desktop-client/src/style/palette.*',
-    ],
-
-    rules: {
-      'no-restricted-imports': [
-        'off',
-        {
-          patterns: [
-            {
-              group: ['**/style', '**/colors'],
-              importNames: ['colors'],
-              message: 'Please use themes instead of colors',
-            },
-          ],
-        },
-      ],
     },
   },
   {
@@ -872,4 +809,4 @@ export default [
       '@typescript-eslint/no-unused-vars': 'off',
     },
   },
-];
+);

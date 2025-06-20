@@ -1,14 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { resetApp } from 'loot-core/client/app/appSlice';
-import { addNotification } from 'loot-core/client/notifications/notificationsSlice';
-import {
-  getAccounts,
-  getPayees,
-  setNewTransactions,
-} from 'loot-core/client/queries/queriesSlice';
-import { createAppAsyncThunk } from 'loot-core/client/redux';
-import { type AppDispatch } from 'loot-core/client/store';
 import { send } from 'loot-core/platform/client/fetch';
 import { type SyncResponseWithErrors } from 'loot-core/server/accounts/app';
 import {
@@ -18,6 +9,16 @@ import {
   type SyncServerSimpleFinAccount,
   type SyncServerPluggyAiAccount,
 } from 'loot-core/types/models';
+
+import { resetApp } from '@desktop-client/app/appSlice';
+import { addNotification } from '@desktop-client/notifications/notificationsSlice';
+import {
+  getAccounts,
+  getPayees,
+  setNewTransactions,
+} from '@desktop-client/queries/queriesSlice';
+import { createAppAsyncThunk } from '@desktop-client/redux';
+import { type AppDispatch } from '@desktop-client/redux/store';
 
 const sliceName = 'account';
 
@@ -232,25 +233,41 @@ export const syncAccounts = createAppAsyncThunk(
       return false;
     }
 
-    const batchSync = !id;
-
-    // Build an array of IDs for accounts to sync.. if no `id` provided
-    // then we assume that all accounts should be synced
-    const queriesState = getState().queries;
-    let accountIdsToSync = !batchSync
-      ? [id]
-      : queriesState.accounts
-          .filter(
-            ({ bank, closed, tombstone }) => !!bank && !closed && !tombstone,
-          )
-          .sort((a, b) =>
-            a.offbudget === b.offbudget
-              ? a.sort_order - b.sort_order
-              : a.offbudget - b.offbudget,
-          )
-          .map(({ id }) => id);
-
     const { setAccountsSyncing } = accountsSlice.actions;
+
+    if (id === 'uncategorized') {
+      // Sync no accounts
+      dispatch(setAccountsSyncing({ ids: [] }));
+      return false;
+    }
+
+    const queriesState = getState().queries;
+    let accountIdsToSync: string[];
+    if (id === 'offbudget' || id === 'onbudget') {
+      const targetOffbudget = id === 'offbudget' ? 1 : 0;
+      accountIdsToSync = queriesState.accounts
+        .filter(
+          ({ bank, closed, tombstone, offbudget }) =>
+            !!bank && !closed && !tombstone && offbudget === targetOffbudget,
+        )
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map(({ id }) => id);
+    } else if (id) {
+      accountIdsToSync = [id];
+    } else {
+      // Default: all accounts
+      accountIdsToSync = queriesState.accounts
+        .filter(
+          ({ bank, closed, tombstone }) => !!bank && !closed && !tombstone,
+        )
+        .sort((a, b) =>
+          a.offbudget === b.offbudget
+            ? a.sort_order - b.sort_order
+            : a.offbudget - b.offbudget,
+        )
+        .map(({ id }) => id);
+    }
+
     dispatch(setAccountsSyncing({ ids: accountIdsToSync }));
 
     // TODO: Force cast to AccountEntity.
@@ -259,7 +276,9 @@ export const syncAccounts = createAppAsyncThunk(
       'accounts-get',
     )) as unknown as AccountEntity[];
     const simpleFinAccounts = accountsData.filter(
-      a => a.account_sync_source === 'simpleFin',
+      a =>
+        a.account_sync_source === 'simpleFin' &&
+        accountIdsToSync.includes(a.id),
     );
 
     let isSyncSuccess = false;
@@ -267,7 +286,7 @@ export const syncAccounts = createAppAsyncThunk(
     const matchedTransactions: Array<TransactionEntity['id']> = [];
     const updatedAccounts: Array<AccountEntity['id']> = [];
 
-    if (batchSync && simpleFinAccounts.length > 0) {
+    if (simpleFinAccounts.length > 0) {
       console.log('Using SimpleFin batch sync');
 
       const res = await send('simplefin-batch-sync', {

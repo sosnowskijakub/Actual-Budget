@@ -1,4 +1,5 @@
-import * as colorPalette from '../palette';
+// eslint-disable-next-line no-restricted-imports
+import * as colorPalette from '@desktop-client/style/palette';
 
 export const pageBackground = colorPalette.gray600;
 export const pageBackgroundModalActive = colorPalette.gray700;

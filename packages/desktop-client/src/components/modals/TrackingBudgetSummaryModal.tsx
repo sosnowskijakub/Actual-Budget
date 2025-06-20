@@ -4,15 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { Stack } from '@actual-app/components/stack';
 import { styles } from '@actual-app/components/styles';
 
-import { type Modal as ModalType } from 'loot-core/client/modals/modalsSlice';
 import { sheetForMonth } from 'loot-core/shared/months';
 import * as monthUtils from 'loot-core/shared/months';
 
-import { ExpenseTotal } from '../budget/tracking/budgetsummary/ExpenseTotal';
-import { IncomeTotal } from '../budget/tracking/budgetsummary/IncomeTotal';
-import { Saved } from '../budget/tracking/budgetsummary/Saved';
-import { Modal, ModalCloseButton, ModalHeader } from '../common/Modal';
-import { NamespaceContext } from '../spreadsheet/NamespaceContext';
+import { ExpenseTotal } from '@desktop-client/components/budget/tracking/budgetsummary/ExpenseTotal';
+import { IncomeTotal } from '@desktop-client/components/budget/tracking/budgetsummary/IncomeTotal';
+import { Saved } from '@desktop-client/components/budget/tracking/budgetsummary/Saved';
+import {
+  Modal,
+  ModalCloseButton,
+  ModalHeader,
+} from '@desktop-client/components/common/Modal';
+import { SheetNameProvider } from '@desktop-client/hooks/useSheetName';
+import { type Modal as ModalType } from '@desktop-client/modals/modalsSlice';
 
 type TrackingBudgetSummaryModalProps = Extract<
   ModalType,
@@ -32,7 +36,7 @@ export function TrackingBudgetSummaryModal({
             title={t('Budget Summary')}
             rightContent={<ModalCloseButton onPress={close} />}
           />
-          <NamespaceContext.Provider value={sheetForMonth(month)}>
+          <SheetNameProvider name={sheetForMonth(month)}>
             <Stack
               spacing={2}
               style={{
@@ -48,7 +52,7 @@ export function TrackingBudgetSummaryModal({
               projected={month >= currentMonth}
               style={{ ...styles.mediumText, marginTop: 20 }}
             />
-          </NamespaceContext.Provider>
+          </SheetNameProvider>
         </>
       )}
     </Modal>

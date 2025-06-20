@@ -11,18 +11,24 @@ import {
   type TransactionEntity,
 } from 'loot-core/types/models';
 
-import { Search } from '../../common/Search';
-import type { Binding, SheetNames, SheetFields } from '../../spreadsheet';
-import { CellValue, CellValueText } from '../../spreadsheet/CellValue';
-import { useSheetValue } from '../../spreadsheet/useSheetValue';
-import { PullToRefresh } from '../PullToRefresh';
-
 import { TransactionList } from './TransactionList';
 
+import { Search } from '@desktop-client/components/common/Search';
+import { PullToRefresh } from '@desktop-client/components/mobile/PullToRefresh';
+import {
+  CellValue,
+  CellValueText,
+} from '@desktop-client/components/spreadsheet/CellValue';
 import {
   SelectedProvider,
   useSelected,
 } from '@desktop-client/hooks/useSelected';
+import { useSheetValue } from '@desktop-client/hooks/useSheetValue';
+import type {
+  Binding,
+  SheetNames,
+  SheetFields,
+} from '@desktop-client/spreadsheet';
 
 type TransactionSearchInputProps = {
   placeholder: string;
@@ -54,7 +60,7 @@ function TransactionSearchInput({
         placeholder={placeholder}
         width="100%"
         height={styles.mobileMinHeight}
-        inputStyle={{
+        style={{
           backgroundColor: theme.tableBackground,
           borderColor: theme.formInputBorder,
         }}
@@ -80,6 +86,7 @@ type TransactionListWithBalancesProps = {
   balanceUncleared?:
     | Binding<'category', 'balanceUncleared'>
     | Binding<'account', 'balanceUncleared'>;
+  runningBalances: Map<TransactionEntity['id'], number> | undefined;
   searchPlaceholder: string;
   onSearch: (searchText: string) => void;
   isLoadingMore: boolean;
@@ -95,6 +102,7 @@ export function TransactionListWithBalances({
   balance,
   balanceCleared,
   balanceUncleared,
+  runningBalances,
   searchPlaceholder = 'Search...',
   onSearch,
   isLoadingMore,
@@ -142,6 +150,7 @@ export function TransactionListWithBalances({
           <TransactionList
             isLoading={isLoading}
             transactions={transactions}
+            runningBalances={runningBalances}
             isLoadingMore={isLoadingMore}
             onLoadMore={onLoadMore}
             onOpenTransaction={onOpenTransaction}
