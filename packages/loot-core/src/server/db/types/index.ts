@@ -121,8 +121,7 @@ export type DbSchedule = {
   tombstone: 1 | 0;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type DbScheduleJsonPath = {
+export type DbScheduleJsonPath = {
   schedule_id: DbSchedule['id'];
   payee: string;
   account: string;
@@ -137,6 +136,7 @@ export type DbScheduleNextDate = {
   local_next_date_ts: number;
   base_next_date: number;
   base_next_date_ts: number;
+  tombstone: 1 | 0;
 };
 
 // This is unused in the codebase.
@@ -181,7 +181,7 @@ export type DbReflectBudget = {
   month: number;
   category: string;
   amount: number;
-  carryover: number;
+  carryover: 1 | 0;
   goal: number;
   long_goal: number;
 };
@@ -196,7 +196,7 @@ export type DbZeroBudget = {
   month: number;
   category: string;
   amount: number;
-  carryover: number;
+  carryover: 1 | 0;
   goal: number;
   long_goal: number;
 };
@@ -302,6 +302,8 @@ export type DbViewPayee = {
   id: DbPayee['id'];
   name: DbAccount['name'] | DbPayee['name'];
   transfer_acct: DbPayee['transfer_acct'];
+  favorite: DbPayee['favorite'];
+  learn_categories: DbPayee['learn_categories'];
   tombstone: DbPayee['tombstone'];
 };
 
