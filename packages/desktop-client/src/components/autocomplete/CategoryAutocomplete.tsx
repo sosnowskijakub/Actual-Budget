@@ -79,7 +79,7 @@ function CategoryList({
   showBalances,
 }: CategoryListProps) {
   const { t } = useTranslation();
-  const lastGroup = useRef<CategoryGroupEntity['id'] | null>(null);
+  const lastGroup = useRef<CategoryGroupEntity['id'] | undefined>(undefined);
 
   return (
     <View>

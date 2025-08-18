@@ -76,7 +76,7 @@ export function SavedFilterMenuButton({
           status: 'saved',
         };
         const response = await sendCatch('filter-update', {
-          state: savedFilter,
+          state: savedFilter.current,
           filters: [...savedFilters],
         });
 
@@ -96,11 +96,13 @@ export function SavedFilterMenuButton({
         break;
       case 'reload-filter':
         setMenuOpen(false);
-        savedFilter.current = {
-          ...savedFilter.current,
-          status: 'saved',
-        };
-        onReloadSavedFilter(savedFilter.current, 'reload');
+        if (savedFilter.current) {
+          savedFilter.current = {
+            ...savedFilter.current,
+            status: 'saved',
+          };
+          onReloadSavedFilter(savedFilter.current, 'reload');
+        }
         break;
       case 'clear-filter':
         setMenuOpen(false);
