@@ -16,6 +16,7 @@ import {
   type NewUserEntity,
   type NoteEntity,
 } from 'loot-core/types/models';
+import { type EnableBankingToken } from 'loot-core/types/models/enablebanking';
 
 import { resetApp, setAppState } from '@desktop-client/app/appSlice';
 import { type SelectLinkedAccountsModalProps } from '@desktop-client/components/modals/SelectLinkedAccountsModal';
@@ -99,6 +100,18 @@ export type Modal =
       name: 'simplefin-init';
       options: {
         onSuccess: () => void;
+      };
+    }
+  | {
+      name: 'enablebanking-init';
+      options: {
+        onSuccess: () => void;
+      };
+    }
+  | {
+      name: 'enablebanking-setup-account';
+      options: {
+        onSuccess: (data: EnableBankingToken) => Promise<void>;
       };
     }
   | {
